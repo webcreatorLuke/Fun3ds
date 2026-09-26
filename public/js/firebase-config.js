@@ -6,12 +6,12 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebas
 import { getFunctions } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBTkFpKwKniIr3acI9Z8DhDZtKi7z4YNic",
+  authDomain: "fun3ds-41428.firebaseapp.com",
+  projectId: "fun3ds-41428",
+  storageBucket: "fun3ds-41428.firebasestorage.app",
+  messagingSenderId: "28838365870",
+  appId: "1:28838365870:web:7d09091c18bc6001737b3f"
 };
 
 // The only account that can see /admin.html. Also enforced server-side in
