@@ -3,7 +3,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { getFunctions } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBTkFpKwKniIr3acI9Z8DhDZtKi7z4YNic",
@@ -15,10 +14,13 @@ const firebaseConfig = {
 };
 
 // The only account that can see /admin.html. Also enforced server-side in
-// firestore.rules and in functions/index.js — never trust this line alone.
+// firestore.rules and in the Cloudflare Worker — never trust this line alone.
 export const ADMIN_EMAIL = "lukeplaysgamezandmore@gmail.com";
+
+// Your Cloudflare Worker — handles checkout, orders, and admin actions
+// now that Cloud Functions are no longer part of this project.
+export const WORKER_URL = "https://fun3ds-flowq-proxy.lukeplaysgamezandmore.workers.dev";
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const functions = getFunctions(app);
