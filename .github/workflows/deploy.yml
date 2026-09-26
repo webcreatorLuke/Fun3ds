@@ -37,11 +37,16 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
 
-      - name: Set Stripe webhook secret in Secret Manager
-        if: ${{ secrets.STRIPE_WEBHOOK_SECRET != '' }}
-        run: echo "${{ secrets.STRIPE_WEBHOOK_SECRET }}" | npx firebase-tools functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+      - name: Set Stripe webhook secret in Secret Manager (if available)
         env:
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
+        run: |
+          if [ -n "$STRIPE_WEBHOOK_SECRET" ]; then
+            echo "$STRIPE_WEBHOOK_SECRET" | npx firebase-tools functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+          else
+            echo "STRIPE_WEBHOOK_SECRET not set yet — skipping (this is expected before your first deploy)"
+          fi
 
       - name: Deploy to Firebase
         run: npx firebase-tools deploy --only firestore:rules,functions,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
