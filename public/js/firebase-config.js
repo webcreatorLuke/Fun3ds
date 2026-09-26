@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 // The only account that can see /admin.html. Also enforced server-side in
 // firestore.rules and in functions/index.js — never trust this line alone.
-export const ADMIN_EMAIL = "you@example.com";
+export const ADMIN_EMAIL = "lukeplaysgamezandmore@gmail.com";
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
