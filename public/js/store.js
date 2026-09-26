@@ -2,8 +2,10 @@ import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/
 import { db } from "./firebase-config.js";
 import { watchAuthUI, signInWithGoogle, signInWithEmail, signUpWithEmail, logOut, auth } from "./auth.js";
 import { openCheckout } from "./checkout.js";
+import { addToCart, initCart } from "./cart.js";
 
 watchAuthUI();
+initCart((cartItems) => openCheckout(cartItems));
 
 document.getElementById("signOutBtn").addEventListener("click", () => logOut());
 
@@ -54,11 +56,17 @@ function renderProducts(products) {
           <span class="stock ${stockClass}">${stockLabel}</span>
         </div>
         <button class="btn btn-primary" ${p.stock === 0 ? "disabled" : ""} data-id="${p.id}">
-          ${p.stock === 0 ? "Sold out" : "Buy now"}
+          ${p.stock === 0 ? "Sold out" : "Add to cart"}
         </button>
       </div>
     `;
-    card.querySelector("button").addEventListener("click", () => openCheckout(p));
+    card.querySelector("button").addEventListener("click", () => {
+      if (!auth.currentUser) {
+        document.getElementById("loginModal").style.display = "flex";
+        return;
+      }
+      addToCart(p);
+    });
     grid.appendChild(card);
   });
 
