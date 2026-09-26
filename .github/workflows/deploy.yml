@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -23,36 +24,27 @@ jobs:
           npm install
 
       - name: Write Firebase service account key
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${{ github.workspace }}/gcp-key.json"
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${{ github.workspace }}/gcp-key.json"
 
       - name: Swap in Stripe publishable key
         run: |
           sed -i "s|__STRIPE_PUBLISHABLE_KEY__|${{ secrets.STRIPE_PUBLISHABLE_KEY }}|g" public/js/checkout.js
 
       - name: Write FlowQ proxy URL
-        run: echo "FLOWQ_PROXY_URL=${{ secrets.FLOWQ_PROXY_URL }}" > functions/.env
-
-      - name: Set Stripe secret key in Secret Manager
-        run: echo "${{ secrets.STRIPE_SECRET_KEY }}" | npx firebase-tools functions:secrets:set STRIPE_SECRET_KEY --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
-
-      - name: Set Stripe webhook secret in Secret Manager (if available)
-        env:
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
         run: |
-          if [ -n "$STRIPE_WEBHOOK_SECRET" ]; then
-            echo "$STRIPE_WEBHOOK_SECRET" | npx firebase-tools functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
-          else
-            echo "STRIPE_WEBHOOK_SECRET not set yet — skipping (this is expected before your first deploy)"
-          fi
+          echo "FLOWQ_PROXY_URL=${{ secrets.FLOWQ_PROXY_URL }}" > functions/.env
 
       - name: Deploy to Firebase
-        run: npx firebase-tools deploy --only firestore:rules,functions,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
+        run: |
+          npx firebase-tools deploy \
+            --only firestore:rules,functions,hosting \
+            --project ${{ secrets.FIREBASE_PROJECT_ID }} \
+            --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
 
       - name: Clean up key file
         if: always()
-        run: rm -f "${{ github.workspace }}/gcp-key.json"
+        run: |
+          rm -f "${{ github.workspace }}/gcp-key.json"
