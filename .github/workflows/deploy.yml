@@ -1,0 +1,53 @@
+name: Deploy Fun3ds
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install functions dependencies
+        run: |
+          cd functions
+          npm install
+
+      - name: Write Firebase service account key
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${{ github.workspace }}/gcp-key.json"
+
+      - name: Swap in Stripe publishable key
+        run: |
+          sed -i "s|__STRIPE_PUBLISHABLE_KEY__|${{ secrets.STRIPE_PUBLISHABLE_KEY }}|g" public/js/checkout.js
+
+      - name: Write FlowQ proxy URL
+        run: echo "FLOWQ_PROXY_URL=${{ secrets.FLOWQ_PROXY_URL }}" > functions/.env
+
+      - name: Set Stripe secret key in Secret Manager
+        run: echo "${{ secrets.STRIPE_SECRET_KEY }}" | npx firebase-tools functions:secrets:set STRIPE_SECRET_KEY --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
+
+      - name: Set Stripe webhook secret in Secret Manager
+        if: ${{ secrets.STRIPE_WEBHOOK_SECRET != '' }}
+        run: echo "${{ secrets.STRIPE_WEBHOOK_SECRET }}" | npx firebase-tools functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file - --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
+
+      - name: Deploy to Firebase
+        run: npx firebase-tools deploy --only firestore:rules,functions,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-key.json
+
+      - name: Clean up key file
+        if: always()
+        run: rm -f "${{ github.workspace }}/gcp-key.json"
