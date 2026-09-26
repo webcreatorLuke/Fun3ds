@@ -18,12 +18,15 @@
       <a href="custom-print.html">Custom print</a>
       <a href="admin.html" data-auth="admin">Admin</a>
     </nav>
-    <div style="display:flex; gap:10px; align-items:center;">
+       <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn" id="openCart" style="position:relative;">
+        Cart
+        <span id="cartBadge" style="display:none; position:absolute; top:-6px; right:-6px; background:#6c5ce7; color:#fff; border-radius:10px; font-size:11px; padding:1px 6px;">0</span>
+      </button>
       <span data-auth="signed-in" data-user-email style="font-size:13px; color:var(--text-dim);"></span>
       <button class="btn" data-auth="signed-in" id="signOutBtn">Sign out</button>
       <button class="btn btn-primary" data-auth="signed-out" id="openLogin">Sign in</button>
     </div>
-  </div>
 </header>
 
 <section class="hero">
