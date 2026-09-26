@@ -6,7 +6,7 @@ service cloud.firestore {
     // ⚠️ Replace with your real admin email — must match ADMIN_EMAIL in
     // public/js/firebase-config.js and functions/index.js exactly.
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == "you@example.com";
+      return request.auth != null && request.auth.token.email == "lukeplaysgamezandmore@gmail.com";
     }
 
     // Public catalog — anyone can browse, only the admin can change it.
