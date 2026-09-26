@@ -12,7 +12,7 @@ const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 
 // Must match public/js/firebase-config.js ADMIN_EMAIL exactly.
-const ADMIN_EMAIL = "you@example.com";
+const ADMIN_EMAIL = "lukeplaysgamezandmore@gmail.com";
 
 // Your Cloudflare Worker CORS proxy in front of the FlowQ print queue API
 // (the same one Fun3ds already uses) — set as an env var, not hardcoded.
