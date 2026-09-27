@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email == "lukeplaysgamezandmore@gmail.com";
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      // Customers can read their own orders.
+      // Admin can read all orders.
+      allow read: if request.auth != null &&
+                     (
+                       resource.data.uid == request.auth.uid ||
+                       isAdmin()
+                     );
+
+      // Admin can mark individual items as already printed.
+      allow update: if isAdmin();
+
+      // Customers can create their own orders.
+      allow create: if request.auth != null &&
+                      request.resource.data.uid == request.auth.uid;
+
+      // Admin can delete orders.
+      allow delete: if isAdmin();
+    }
+
+    // Custom requests
+    match /customRequests/{requestId} {
+      // Customers can create their own pending request.
+      allow create: if request.auth != null &&
+                       request.resource.data.uid == request.auth.uid &&
+                       request.resource.data.status == "pending";
+
+      // Customers can read their own requests.
+      // Admin can read all requests.
+      allow read: if request.auth != null &&
+                     (
+                       resource.data.uid == request.auth.uid ||
+                       isAdmin()
+                     );
+
+      // Admin actions happen through the Cloudflare Worker.
+      allow update, delete: if false;
+    }
+  }
+}

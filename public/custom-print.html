@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Custom print request — Fun3ds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="logo" href="index.html"><span class="dot"></span>Fun3ds</a>
+    <nav class="nav-links">
+      <a href="index.html">Shop</a>
+      <a href="custom-print.html" class="active">Custom print</a>
+      <a href="admin.html" data-auth="admin">Admin</a>
+    </nav>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span data-auth="signed-in" data-user-email style="font-size:13px; color:var(--text-dim);"></span>
+      <button class="btn" data-auth="signed-in" id="signOutBtn">Sign out</button>
+      <button class="btn btn-primary" data-auth="signed-out" id="openLogin">Sign in</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" style="max-width:640px; padding-top:48px; padding-bottom:80px;">
+  <div class="section-head" style="margin-top:0;">
+    <h2>Request a custom print</h2>
+  </div>
+  <p style="color:var(--text-dim); margin-top:-8px;">
+    I'll review your request and either accept it with a price and payment link, or let you know if it's not doable.
+  </p>
+
+  <div class="mode-toggle">
+    <button id="modeOnline" class="active">
+      <strong>Online print</strong>
+      <span>Found a model on MakerWorld — paste the link</span>
+    </button>
+    <button id="modeDog">
+      <strong>Get your dog in a 3D print</strong>
+      <span>Upload a photo, I'll model it</span>
+    </button>
+  </div>
+
+  <div class="panel">
+    <!-- Online print form -->
+    <form id="onlineForm">
+      <div class="field">
+        <label>MakerWorld link</label>
+        <input type="url" id="mwLink" placeholder="https://makerworld.com/en/models/..." required />
+        <div class="hint">Paste the link to the exact model (and variant, if there are several) you want printed.</div>
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <select id="mwColor"><option>White (site default)</option><option>Black</option><option>Other — mention it below</option></select>
+      </div>
+      <div class="field">
+        <label>Notes (size, quantity, anything else)</label>
+        <textarea id="mwNotes"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Send request</button>
+    </form>
+
+    <!-- Dog print form -->
+    <form id="dogForm" style="display:none;">
+      <div class="field">
+        <label>Photo of your dog</label>
+        <input type="file" id="dogPhoto" accept="image/*" required />
+      </div>
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="dogName" placeholder="What's their name?" required />
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <div class="swatches">
+          <div class="swatch selected" style="background:#fff;" data-color="White"></div>
+          <div class="swatch" style="background:#151515;" data-color="Black"></div>
+          <div class="swatch" style="background:#c94f22;" data-color="Orange"></div>
+          <div class="swatch" style="background:#37c98d;" data-color="Mint"></div>
+        </div>
+        <input type="hidden" id="dogColor" value="White" />
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="dogNotes" placeholder="Size, pose, anything you want captured"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Send request</button>
+    </form>
+
+    <p class="field hint" id="formStatus" style="margin-top:14px;"></p>
+  </div>
+
+  <div class="section-head"><h2 style="font-size:18px;">Your requests</h2></div>
+  <div id="myRequests"><p style="color:var(--text-dim); font-size:14px;">Sign in to see your requests.</p></div>
+</div>
+
+<!-- Sign in modal (same pattern as index.html) -->
+<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
+  <div class="panel" style="width:360px; max-width:92vw;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; font-family:var(--font-display);">Sign in</h3>
+      <button class="btn btn-ghost" id="closeLogin">✕</button>
+    </div>
+    <button class="btn" style="width:100%; margin-bottom:14px;" id="googleSignIn">Continue with Google</button>
+    <div style="text-align:center; color:var(--text-dim); font-size:12px; margin-bottom:14px;">or</div>
+    <div class="field"><label>Email</label><input id="loginEmail" type="email" /></div>
+    <div class="field"><label>Password</label><input id="loginPassword" type="password" /></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" id="emailSignIn" style="flex:1;">Sign in</button>
+      <button class="btn" id="emailSignUp" style="flex:1;">Create account</button>
+    </div>
+    <p class="field hint" id="loginStatus"></p>
+  </div>
+</div>
+
+<footer class="footer"><div class="wrap">Fun3ds — printed to order.</div></footer>
+
+<script type="module" src="js/custom-print.js"></script>
+</body>
+</html>

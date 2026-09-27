@@ -1,0 +1,173 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fun3ds — small-batch 3D prints</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="logo" href="index.html"><span class="dot"></span>Fun3ds</a>
+    <nav class="nav-links">
+      <a href="index.html" class="active">Shop</a>
+      <a href="custom-print.html">Custom print</a>
+      <a href="admin.html" data-auth="admin">Admin</a>
+    </nav>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn" id="openCart" style="position:relative;">
+        Cart
+        <span id="cartBadge" style="display:none; position:absolute; top:-6px; right:-6px; background:#6c5ce7; color:#fff; border-radius:10px; font-size:11px; padding:1px 6px;">0</span>
+      </button>
+      <span data-auth="signed-in" data-user-email style="font-size:13px; color:var(--text-dim);"></span>
+      <button class="btn" data-auth="signed-in" id="signOutBtn">Sign out</button>
+      <button class="btn btn-primary" data-auth="signed-out" id="openLogin">Sign in</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Small-batch 3D prints, made to order.</h1>
+    <p>Fidgets, toys, and one-off custom prints — printed on my own printers and shipped out by hand. Want something specific? Send a custom print request and I'll quote it.</p>
+    <div class="hero-actions">
+      <a href="#shop" class="btn btn-primary">Browse prints</a>
+      <a href="custom-print.html" class="btn">Request a custom print</a>
+    </div>
+    <div class="status-strip">
+      <div class="status-cell"><div class="num" id="statInStock">—</div><div class="label">items in stock</div></div>
+      <div class="status-cell"><div class="num" id="statSoldOut">—</div><div class="label">sold out right now</div></div>
+      <div class="status-cell"><div class="num">2</div><div class="label">printers running</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap" id="shop">
+  <div class="section-head">
+    <h2>All prints</h2>
+    <span class="sub" id="countLabel"></span>
+  </div>
+  <div class="grid" id="productGrid">
+    <p style="color:var(--text-dim)">Loading prints…</p>
+  </div>
+</div>
+
+<!-- Checkout modal: embedded Stripe Payment Element -->
+
+<div id="checkoutModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
+  <div class="panel" style="width:460px; max-width:92vw; max-height:88vh; overflow-y:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; font-family:var(--font-display);">Checkout</h3>
+      <button class="btn btn-ghost" id="closeCheckout">✕</button>
+    </div>
+
+    <div id="ckSummary" style="margin-bottom:16px; font-size:13px;"></div>
+
+    <!-- Step 1: shipping address -->
+    <div id="ckStepAddress">
+      <div class="field">
+        <label>Full name</label>
+        <input id="ckName" type="text" required />
+      </div>
+      <div class="field">
+        <label>Street address</label>
+        <input id="ckStreet1" type="text" placeholder="123 Main St" required />
+      </div>
+      <div class="field">
+        <label>Apt / suite <span class="hint">(optional)</span></label>
+        <input id="ckStreet2" type="text" />
+      </div>
+      <div style="display:flex; gap:10px;">
+        <div class="field" style="flex:2;"><label>City</label><input id="ckCity" type="text" required /></div>
+        <div class="field" style="flex:1;"><label>State</label><input id="ckState" type="text" placeholder="CA" maxlength="2" required /></div>
+        <div class="field" style="flex:1;"><label>ZIP</label><input id="ckZip" type="text" required /></div>
+      </div>
+      <button class="btn btn-primary" id="ckGetRatesBtn" style="width:100%;">See shipping options</button>
+    </div>
+
+    <!-- Step 2: pick a shipping rate -->
+    <div id="ckStepRates" style="display:none;">
+      <div id="ckRatesList" style="margin-bottom:14px;"></div>
+      <button class="btn" id="ckBackToAddress" style="margin-bottom:10px;">← Edit address</button>
+      <button class="btn btn-primary" id="ckContinueBtn" style="width:100%;" disabled>Continue to payment</button>
+    </div>
+
+    <!-- Step 3: payment -->
+    <div id="ckStepPayment" style="display:none;">
+      <div id="paymentElement" class="field"></div>
+      <button class="btn btn-primary" id="ckPayBtn" style="width:100%;">Pay <span id="ckPrice"></span></button>
+    </div>
+
+    <p class="field hint" id="ckStatus"></p>
+  </div>
+</div>
+
+<!-- Cart drawer -->
+
+<div id="cartModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
+  <div class="panel" style="width:420px; max-width:92vw;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; font-family:var(--font-display);">Your cart</h3>
+      <button class="btn btn-ghost" id="closeCart">✕</button>
+    </div>
+
+    <div id="cartItems"></div>
+
+    <p id="cartEmpty" style="color:var(--text-dim);">Your cart is empty.</p>
+
+    <div style="display:flex; justify-content:space-between; font-weight:600; margin:14px 0;">
+      <span>Total</span>
+      <span id="cartTotal">$0.00</span>
+    </div>
+
+    <button class="btn btn-primary" id="cartCheckoutBtn" style="width:100%;">Checkout</button>
+
+  </div>
+</div>
+
+<!-- Sign in modal -->
+
+<div id="loginModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
+  <div class="panel" style="width:360px; max-width:92vw;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="margin:0; font-family:var(--font-display);">Sign in</h3>
+      <button class="btn btn-ghost" id="closeLogin">✕</button>
+    </div>
+
+    <button class="btn" style="width:100%; margin-bottom:14px;" id="googleSignIn">Continue with Google</button>
+
+    <div style="text-align:center; color:var(--text-dim); font-size:12px; margin-bottom:14px;">or</div>
+
+    <div class="field">
+      <label>Email</label>
+      <input id="loginEmail" type="email" />
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input id="loginPassword" type="password" />
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" id="emailSignIn" style="flex:1;">Sign in</button>
+      <button class="btn" id="emailSignUp" style="flex:1;">Create account</button>
+    </div>
+
+    <p class="field hint" id="loginStatus"></p>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="wrap">Fun3ds — printed to order.</div>
+</footer>
+
+<script type="module" src="js/store.js?v=20260927"></script>
+
+</body>
+</html>
