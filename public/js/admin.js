@@ -22,7 +22,9 @@ import {
 
 watchAuthUI();
 
-document.getElementById("signOutBtn").addEventListener("click", () => logOut());
+document
+  .getElementById("signOutBtn")
+  .addEventListener("click", () => logOut());
 
 
 // ============================================================
@@ -38,22 +40,30 @@ const WORKER_URL =
 // ============================================================
 
 async function callWorker(path, body = {}) {
+
   const user = auth.currentUser;
 
   if (!user) {
     throw new Error("You must be signed in.");
   }
 
-  const idToken = await user.getIdToken();
+  const idToken =
+    await user.getIdToken();
 
-  const response = await fetch(`${WORKER_URL}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${idToken}`
-    },
-    body: JSON.stringify(body)
-  });
+  const response =
+    await fetch(
+      `${WORKER_URL}${path}`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+
+        body: JSON.stringify(body)
+      }
+    );
 
   let data = {};
 
@@ -64,7 +74,12 @@ async function callWorker(path, body = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(data.error || `Worker request failed (${response.status})`);
+
+    throw new Error(
+      data.error ||
+      `Worker request failed (${response.status})`
+    );
+
   }
 
   return data;
@@ -76,7 +91,9 @@ async function callWorker(path, body = {}) {
 // ============================================================
 
 onAuthStateChanged(auth, (user) => {
-  const authorized = isAdmin(user);
+
+  const authorized =
+    isAdmin(user);
 
   document.getElementById("gate").style.display =
     authorized ? "none" : "block";
@@ -87,6 +104,7 @@ onAuthStateChanged(auth, (user) => {
   if (authorized) {
     initDashboard();
   }
+
 });
 
 
@@ -97,32 +115,57 @@ onAuthStateChanged(auth, (user) => {
 let initialized = false;
 
 function initDashboard() {
+
   if (initialized) return;
 
   initialized = true;
 
-  // ---- Tabs ----
 
-  document.querySelectorAll(".tabbar button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".tabbar button")
-        .forEach((b) => b.classList.remove("active"));
+  // ==========================================================
+  // TABS
+  // ==========================================================
 
-      btn.classList.add("active");
+  document
+    .querySelectorAll(".tabbar button")
+    .forEach((btn) => {
 
-      ["orders", "requests", "products"].forEach((tab) => {
-        document.getElementById("tab-" + tab).style.display =
-          tab === btn.dataset.tab ? "" : "none";
+      btn.addEventListener("click", () => {
+
+        document
+          .querySelectorAll(".tabbar button")
+          .forEach((b) => {
+            b.classList.remove("active");
+          });
+
+        btn.classList.add("active");
+
+
+        [
+          "orders",
+          "requests",
+          "products"
+        ].forEach((tab) => {
+
+          document.getElementById(
+            "tab-" + tab
+          ).style.display =
+            tab === btn.dataset.tab
+              ? ""
+              : "none";
+
+        });
+
       });
+
     });
-  });
+
 
   watchOrders();
   watchRequests();
   watchProducts();
   wireProductForm();
   wireAcceptModal();
+
 }
 
 
@@ -131,200 +174,130 @@ function initDashboard() {
 // ============================================================
 
 function watchOrders() {
-  const q = query(
-    collection(db, "orders"),
-    orderBy("createdAt", "desc")
-  );
+
+  const q =
+    query(
+      collection(db, "orders"),
+      orderBy("createdAt", "desc")
+    );
+
 
   onSnapshot(q, (snap) => {
-    const body = document.getElementById("ordersBody");
+
+    const body =
+      document.getElementById("ordersBody");
+
 
     if (snap.empty) {
+
       body.innerHTML =
-        `<tr><td colspan="8">No orders yet.</td></tr>`;
+        `<tr><td colspan="7">No orders yet.</td></tr>`;
+
       return;
+
     }
 
-    body.innerHTML = snap.docs.map((d) => {
-      const o = d.data();
-      const orderId = d.id;
 
-      const orderItems = o.items || [];
+    body.innerHTML =
+      snap.docs.map((d) => {
 
-      const itemsHtml = orderItems.length
-        ? orderItems.map((i, index) => {
-            const printed = i.alreadyPrinted === true;
+        const o = d.data();
 
-            return `
-              <div style="
-                display:flex;
-                align-items:center;
-                gap:8px;
-                margin-bottom:6px;
-                ${printed ? "opacity:.65;" : ""}
-              ">
-                <span>
-                  ${i.name || "Item"} × ${i.qty || 1}
-                </span>
+        const items =
+          (o.items || [])
+            .map(
+              (i) =>
+                `${i.name} × ${i.qty}`
+            )
+            .join(", ");
 
-                <label style="
-                  display:flex;
-                  align-items:center;
-                  gap:4px;
-                  font-size:12px;
-                  color:var(--text-dim);
-                  white-space:nowrap;
-                  cursor:pointer;
-                ">
-                  <input
-                    type="checkbox"
-                    data-printed-order="${orderId}"
-                    data-printed-index="${index}"
-                    ${printed ? "checked" : ""}
-                  />
-                  Printed
-                </label>
-              </div>
-            `;
-          }).join("")
-        : "—";
 
-      const delivery = o.deliveryInfo
-        ? `${o.deliveryInfo.name}<br/><span style="color:var(--text-dim)">${o.deliveryInfo.address}</span>`
-        : "—";
+        const delivery =
+          o.deliveryInfo
 
-      const printableItems = orderItems.filter(
-        (item) => item.alreadyPrinted !== true
-      );
+            ? `
+              ${o.deliveryInfo.name}
+              <br/>
+              <span style="color:var(--text-dim)">
+                ${o.deliveryInfo.address}
+              </span>
+            `
 
-      const allPrinted =
-        orderItems.length > 0 && printableItems.length === 0;
+            : "—";
 
-      const flowqLabel = o.flowqSent
-        ? `<span class="badge accepted">sent</span>`
-        : allPrinted
-          ? `<span class="badge accepted">all printed</span>`
-          : (
-              o.status === "paid"
-                ? `<span class="badge pending">not sent</span>`
-                : "—"
-            );
 
-      const sendBtn =
-        o.status === "paid" &&
-        !o.flowqSent &&
-        !allPrinted
-          ? `<button class="btn" data-send-flowq="${orderId}">Send to FlowQ</button>`
-          : "";
+        const flowqLabel =
+          o.flowqSent
 
-      return `
-        <tr>
-          <td style="font-family:var(--font-tag); font-size:12px;">
-            ${orderId.slice(0, 8)}
-          </td>
+            ? `<span class="badge accepted">sent</span>`
 
-          <td>${itemsHtml}</td>
-
-          <td>${o.customerEmail || "—"}</td>
-
-          <td>${delivery}</td>
-
-          <td>
-            <span class="badge ${o.status}">
-              ${o.status}
-            </span>
-          </td>
-
-          <td>
-            ${
-              allPrinted
-                ? `<span class="badge accepted">all printed</span>`
-                : orderItems.some(i => i.alreadyPrinted === true)
-                  ? `<span class="badge pending">some printed</span>`
+            : (
+                o.status === "paid"
+                  ? `<span class="badge pending">not sent</span>`
                   : "—"
-            }
-          </td>
-
-          <td>${flowqLabel}</td>
-
-          <td class="row-actions">
-            ${sendBtn}
-          </td>
-        </tr>
-      `;
-    }).join("");
+              );
 
 
-    // ========================================================
-    // ALREADY PRINTED CHECKBOXES
-    // ========================================================
+        const sendBtn =
+          o.status === "paid" &&
+          !o.flowqSent
 
-    body
-      .querySelectorAll("[data-printed-order]")
-      .forEach((checkbox) => {
+            ? `
+              <button
+                class="btn"
+                data-send-flowq="${d.id}"
+              >
+                Send to FlowQ
+              </button>
+            `
 
-        checkbox.addEventListener("change", async () => {
+            : "";
 
-          const orderId =
-            checkbox.dataset.printedOrder;
 
-          const itemIndex =
-            parseInt(
-              checkbox.dataset.printedIndex,
-              10
-            );
+        return `
+          <tr>
 
-          checkbox.disabled = true;
+            <td
+              style="
+                font-family:var(--font-tag);
+                font-size:12px;
+              "
+            >
+              ${d.id.slice(0, 8)}
+            </td>
 
-          try {
+            <td>
+              ${items}
+            </td>
 
-            // Find the current order data from the snapshot.
-            const orderDoc =
-              snap.docs.find((d) => d.id === orderId);
+            <td>
+              ${o.customerEmail || "—"}
+            </td>
 
-            if (!orderDoc) {
-              throw new Error("Order not found.");
-            }
+            <td>
+              ${delivery}
+            </td>
 
-            const orderData = orderDoc.data();
+            <td>
 
-            const items = [...(orderData.items || [])];
+              <span class="badge ${o.status}">
+                ${o.status}
+              </span>
 
-            if (!items[itemIndex]) {
-              throw new Error("Order item not found.");
-            }
+            </td>
 
-            // Make a copy of the item and change its printed state.
-            items[itemIndex] = {
-              ...items[itemIndex],
-              alreadyPrinted: checkbox.checked
-            };
+            <td>
+              ${flowqLabel}
+            </td>
 
-            await updateDoc(
-              doc(db, "orders", orderId),
-              {
-                items
-              }
-            );
+            <td class="row-actions">
+              ${sendBtn}
+            </td>
 
-          } catch (e) {
+          </tr>
+        `;
 
-            checkbox.checked = !checkbox.checked;
-
-            alert(
-              "Couldn't update printed status: " +
-              e.message
-            );
-
-          } finally {
-
-            checkbox.disabled = false;
-
-          }
-
-        });
-
-      });
+      }).join("");
 
 
     // ========================================================
@@ -335,47 +308,72 @@ function watchOrders() {
       .querySelectorAll("[data-send-flowq]")
       .forEach((btn) => {
 
-        btn.addEventListener("click", async () => {
+        btn.addEventListener(
+          "click",
+          async () => {
 
-          if (!confirm("Send the unprinted items in this order to FlowQ?")) {
-            return;
-          }
-
-          btn.disabled = true;
-          btn.textContent = "Sending…";
-
-          try {
-
-            const result = await callWorker(
-              "/send-order-to-flowq",
-              {
-                orderId: btn.dataset.sendFlowq
-              }
-            );
-
-            if (result.skippedAll) {
-              btn.textContent = "All printed";
-            } else {
-              btn.textContent = "Sent";
+            if (
+              !confirm(
+                "Send this order to FlowQ?"
+              )
+            ) {
+              return;
             }
 
-          } catch (e) {
 
-            btn.disabled = false;
-            btn.textContent = "Send to FlowQ";
+            btn.disabled = true;
 
-            alert(
-              "Couldn't send to FlowQ: " +
-              e.message
-            );
+            btn.textContent =
+              "Sending…";
+
+
+            try {
+
+              const result =
+                await callWorker(
+                  "/send-order-to-flowq",
+                  {
+                    orderId:
+                      btn.dataset.sendFlowq
+                  }
+                );
+
+
+              if (result.skippedAll) {
+
+                btn.textContent =
+                  "All printed";
+
+              } else {
+
+                btn.textContent =
+                  "Sent";
+
+              }
+
+
+            } catch (e) {
+
+              btn.disabled = false;
+
+              btn.textContent =
+                "Send to FlowQ";
+
+
+              alert(
+                "Couldn't send to FlowQ: " +
+                e.message
+              );
+
+            }
 
           }
-
-        });
+        );
 
       });
 
   });
+
 }
 
 
@@ -388,14 +386,20 @@ let pendingAcceptId = null;
 
 function watchRequests() {
 
-  const q = query(
-    collection(db, "customRequests"),
-    orderBy("createdAt", "desc")
-  );
+  const q =
+    query(
+      collection(db, "customRequests"),
+      orderBy("createdAt", "desc")
+    );
+
 
   onSnapshot(q, (snap) => {
 
-    const body = document.getElementById("requestsBody");
+    const body =
+      document.getElementById(
+        "requestsBody"
+      );
+
 
     if (snap.empty) {
 
@@ -407,153 +411,199 @@ function watchRequests() {
     }
 
 
-    body.innerHTML = snap.docs.map((d) => {
+    body.innerHTML =
+      snap.docs.map((d) => {
 
-      const r = d.data();
-
-      const details =
-        r.type === "dog"
-
-          ? `
-            <img
-              src="${r.photoData}"
-              alt=""
-              style="
-                width:56px;
-                height:56px;
-                object-fit:cover;
-                border-radius:6px;
-                vertical-align:middle;
-                margin-right:8px;
-              "
-            >
-            "${r.petName}", ${r.color}
-            ${r.notes ? " — " + r.notes : ""}
-          `
-
-          : `
-            <a
-              href="${r.makerworldLink}"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              MakerWorld link
-            </a>,
-            ${r.color}
-            ${r.notes ? " — " + r.notes : ""}
-          `;
+        const r = d.data();
 
 
-      const actions =
-        r.status === "pending"
+        const details =
+          r.type === "dog"
 
-          ? `
-            <button
-              class="btn btn-primary"
-              data-accept="${d.id}"
-            >
-              Accept
-            </button>
+            ? `
+              <img
+                src="${r.photoData}"
+                alt=""
+                style="
+                  width:56px;
+                  height:56px;
+                  object-fit:cover;
+                  border-radius:6px;
+                  vertical-align:middle;
+                  margin-right:8px;
+                "
+              >
 
-            <button
-              class="btn btn-danger"
-              data-decline="${d.id}"
-            >
-              Decline
-            </button>
-          `
+              "${r.petName}",
+              ${r.color}
 
-          : "";
+              ${r.notes
+                ? " — " + r.notes
+                : ""}
+            `
 
+            : `
+              <a
+                href="${r.makerworldLink}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                MakerWorld link
+              </a>,
 
-      return `
-        <tr>
+              ${r.color}
 
-          <td>
-            ${r.type === "dog"
-              ? "Dog print"
-              : "Online print"}
-          </td>
-
-          <td>${details}</td>
-
-          <td>${r.customerEmail || "—"}</td>
-
-          <td>
-            <span class="badge ${r.status}">
-              ${r.status}
-            </span>
-          </td>
-
-          <td class="row-actions">
-            ${actions}
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
+              ${r.notes
+                ? " — " + r.notes
+                : ""}
+            `;
 
 
-    // ---- Accept ----
+        const actions =
+          r.status === "pending"
+
+            ? `
+              <button
+                class="btn btn-primary"
+                data-accept="${d.id}"
+              >
+                Accept
+              </button>
+
+              <button
+                class="btn btn-danger"
+                data-decline="${d.id}"
+              >
+                Decline
+              </button>
+            `
+
+            : "";
+
+
+        return `
+          <tr>
+
+            <td>
+              ${
+                r.type === "dog"
+                  ? "Dog print"
+                  : "Online print"
+              }
+            </td>
+
+            <td>
+              ${details}
+            </td>
+
+            <td>
+              ${r.customerEmail || "—"}
+            </td>
+
+            <td>
+
+              <span class="badge ${r.status}">
+                ${r.status}
+              </span>
+
+            </td>
+
+            <td class="row-actions">
+              ${actions}
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+
+    // ========================================================
+    // ACCEPT
+    // ========================================================
 
     body
       .querySelectorAll("[data-accept]")
       .forEach((btn) => {
 
-        btn.addEventListener("click", () => {
+        btn.addEventListener(
+          "click",
+          () => {
 
-          pendingAcceptId = btn.dataset.accept;
+            pendingAcceptId =
+              btn.dataset.accept;
 
-          document.getElementById("acceptModal").style.display =
-            "flex";
+            document
+              .getElementById("acceptModal")
+              .style.display =
+                "flex";
 
-        });
+          }
+        );
 
       });
 
 
-    // ---- Decline ----
+    // ========================================================
+    // DECLINE
+    // ========================================================
 
     body
       .querySelectorAll("[data-decline]")
       .forEach((btn) => {
 
-        btn.addEventListener("click", async () => {
+        btn.addEventListener(
+          "click",
+          async () => {
 
-          if (!confirm("Decline this request?")) {
-            return;
+            if (
+              !confirm(
+                "Decline this request?"
+              )
+            ) {
+              return;
+            }
+
+
+            btn.disabled = true;
+
+            btn.textContent =
+              "Declining…";
+
+
+            try {
+
+              await callWorker(
+                "/decline-custom-request",
+                {
+                  requestId:
+                    btn.dataset.decline
+                }
+              );
+
+
+            } catch (e) {
+
+              btn.disabled = false;
+
+              btn.textContent =
+                "Decline";
+
+
+              alert(
+                "Couldn't decline request: " +
+                e.message
+              );
+
+            }
+
           }
-
-          btn.disabled = true;
-          btn.textContent = "Declining…";
-
-          try {
-
-            await callWorker(
-              "/decline-custom-request",
-              {
-                requestId: btn.dataset.decline
-              }
-            );
-
-          } catch (e) {
-
-            btn.disabled = false;
-            btn.textContent = "Decline";
-
-            alert(
-              "Couldn't decline request: " +
-              e.message
-            );
-
-          }
-
-        });
+        );
 
       });
 
   });
+
 }
 
 
@@ -564,113 +614,165 @@ function watchRequests() {
 function wireAcceptModal() {
 
   const cancelBtn =
-    document.getElementById("acceptCancel");
+    document.getElementById(
+      "acceptCancel"
+    );
 
   const confirmBtn =
-    document.getElementById("acceptConfirm");
+    document.getElementById(
+      "acceptConfirm"
+    );
 
 
-  cancelBtn.addEventListener("click", () => {
+  cancelBtn.addEventListener(
+    "click",
+    () => {
 
-    document.getElementById("acceptModal").style.display =
-      "none";
-
-    pendingAcceptId = null;
-
-  });
-
-
-  confirmBtn.addEventListener("click", async () => {
-
-    const status =
-      document.getElementById("acceptStatus");
-
-    const price =
-      parseFloat(
-        document.getElementById("acceptPrice").value
-      );
-
-    const paymentLink =
       document
-        .getElementById("acceptPaymentLink")
-        .value
-        .trim();
-
-    const flowqFileId =
-      document
-        .getElementById("acceptFlowq")
-        .value
-        .trim();
-
-
-    if (!pendingAcceptId) {
-
-      status.textContent =
-        "No request selected.";
-
-      return;
-
-    }
-
-
-    if (!price || price <= 0 || !paymentLink) {
-
-      status.textContent =
-        "Price and payment link are required.";
-
-      return;
-
-    }
-
-
-    confirmBtn.disabled = true;
-    status.textContent = "Saving…";
-
-
-    try {
-
-      await callWorker(
-        "/accept-custom-request",
-        {
-          requestId: pendingAcceptId,
-          price,
-          paymentLink,
-          flowqFileId
-        }
-      );
-
-
-      document.getElementById("acceptModal").style.display =
-        "none";
-
-
-      document.getElementById("acceptPrice").value =
-        "";
-
-      document.getElementById("acceptPaymentLink").value =
-        "";
-
-      document.getElementById("acceptFlowq").value =
-        "";
-
-      status.textContent =
-        "";
+        .getElementById("acceptModal")
+        .style.display =
+          "none";
 
       pendingAcceptId = null;
 
+    }
+  );
 
-    } catch (e) {
+
+  confirmBtn.addEventListener(
+    "click",
+    async () => {
+
+      const status =
+        document.getElementById(
+          "acceptStatus"
+        );
+
+
+      const price =
+        parseFloat(
+          document.getElementById(
+            "acceptPrice"
+          ).value
+        );
+
+
+      const paymentLink =
+        document
+          .getElementById(
+            "acceptPaymentLink"
+          )
+          .value
+          .trim();
+
+
+      const flowqFileId =
+        document
+          .getElementById(
+            "acceptFlowq"
+          )
+          .value
+          .trim();
+
+
+      if (!pendingAcceptId) {
+
+        status.textContent =
+          "No request selected.";
+
+        return;
+
+      }
+
+
+      if (
+        !price ||
+        price <= 0 ||
+        !paymentLink
+      ) {
+
+        status.textContent =
+          "Price and payment link are required.";
+
+        return;
+
+      }
+
+
+      confirmBtn.disabled = true;
 
       status.textContent =
-        "Error: " + e.message;
+        "Saving…";
 
-    } finally {
 
-      confirmBtn.disabled = false;
+      try {
+
+        await callWorker(
+          "/accept-custom-request",
+          {
+            requestId:
+              pendingAcceptId,
+
+            price,
+
+            paymentLink,
+
+            flowqFileId
+          }
+        );
+
+
+        document
+          .getElementById(
+            "acceptModal"
+          )
+          .style.display =
+            "none";
+
+
+        document
+          .getElementById(
+            "acceptPrice"
+          )
+          .value = "";
+
+
+        document
+          .getElementById(
+            "acceptPaymentLink"
+          )
+          .value = "";
+
+
+        document
+          .getElementById(
+            "acceptFlowq"
+          )
+          .value = "";
+
+
+        status.textContent =
+          "";
+
+
+        pendingAcceptId =
+          null;
+
+
+      } catch (e) {
+
+        status.textContent =
+          "Error: " + e.message;
+
+      } finally {
+
+        confirmBtn.disabled = false;
+
+      }
 
     }
+  );
 
-  });
 }
 
 
@@ -680,172 +782,328 @@ function wireAcceptModal() {
 
 function watchProducts() {
 
-  const q = query(
-    collection(db, "products"),
-    orderBy("name")
-  );
+  const q =
+    query(
+      collection(db, "products"),
+      orderBy("name")
+    );
+
 
   onSnapshot(q, (snap) => {
 
     const body =
-      document.getElementById("productsBody");
+      document.getElementById(
+        "productsBody"
+      );
 
 
     if (snap.empty) {
 
       body.innerHTML =
-        `<tr><td colspan="5">No products yet.</td></tr>`;
+        `<tr><td colspan="6">No products yet.</td></tr>`;
 
       return;
 
     }
 
 
-    body.innerHTML = snap.docs.map((d) => {
+    body.innerHTML =
+      snap.docs.map((d) => {
 
-      const p = d.data();
+        const p = d.data();
 
-      return `
-        <tr>
+        const alreadyPrinted =
+          p.alreadyPrinted === true;
 
-          <td>${p.name}</td>
 
-          <td>
-            <input
-              type="number"
-              step="0.01"
-              value="${p.price}"
-              data-edit="price"
-              data-id="${d.id}"
+        return `
+          <tr>
+
+            <td>
+              ${p.name}
+            </td>
+
+
+            <td>
+
+              <input
+                type="number"
+                step="0.01"
+                value="${p.price}"
+                data-edit="price"
+                data-id="${d.id}"
+
+                style="
+                  width:80px;
+                  background:var(--ink);
+                  color:var(--text);
+                  border:1px solid var(--line);
+                  border-radius:4px;
+                  padding:4px;
+                "
+              />
+
+            </td>
+
+
+            <td>
+
+              <input
+                type="number"
+                value="${p.stock}"
+                data-edit="stock"
+                data-id="${d.id}"
+
+                style="
+                  width:64px;
+                  background:var(--ink);
+                  color:var(--text);
+                  border:1px solid var(--line);
+                  border-radius:4px;
+                  padding:4px;
+                "
+              />
+
+            </td>
+
+
+            <td
               style="
-                width:80px;
-                background:var(--ink);
-                color:var(--text);
-                border:1px solid var(--line);
-                border-radius:4px;
-                padding:4px;
+                font-family:var(--font-tag);
+                font-size:12px;
               "
-            />
-          </td>
-
-          <td>
-            <input
-              type="number"
-              value="${p.stock}"
-              data-edit="stock"
-              data-id="${d.id}"
-              style="
-                width:64px;
-                background:var(--ink);
-                color:var(--text);
-                border:1px solid var(--line);
-                border-radius:4px;
-                padding:4px;
-              "
-            />
-          </td>
-
-          <td style="font-family:var(--font-tag); font-size:12px;">
-            ${p.flowqFileId || "—"}
-          </td>
-
-          <td class="row-actions">
-
-            <button
-              class="btn btn-danger"
-              data-delete="${d.id}"
             >
-              Delete
-            </button>
-
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
+              ${p.flowqFileId || "—"}
+            </td>
 
 
-    // ---- Edit price / stock ----
+            <!-- =================================================
+                 ALREADY PRINTED
+            ================================================== -->
+
+            <td>
+
+              <label
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:7px;
+                  cursor:pointer;
+                  white-space:nowrap;
+                "
+              >
+
+                <input
+                  type="checkbox"
+
+                  data-printed-id="${d.id}"
+
+                  ${alreadyPrinted
+                    ? "checked"
+                    : ""}
+
+                  style="
+                    width:18px;
+                    height:18px;
+                    cursor:pointer;
+                  "
+                />
+
+                <span>
+                  Already printed
+                </span>
+
+              </label>
+
+            </td>
+
+
+            <td class="row-actions">
+
+              <button
+                class="btn btn-danger"
+                data-delete="${d.id}"
+              >
+                Delete
+              </button>
+
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+
+    // ========================================================
+    // EDIT PRICE / STOCK
+    // ========================================================
 
     body
       .querySelectorAll("[data-edit]")
       .forEach((input) => {
 
-        input.addEventListener("change", async () => {
+        input.addEventListener(
+          "change",
+          async () => {
 
-          const field =
-            input.dataset.edit;
-
-          const value =
-            field === "price"
-              ? parseFloat(input.value)
-              : parseInt(input.value, 10);
+            const field =
+              input.dataset.edit;
 
 
-          try {
+            const value =
+              field === "price"
 
-            await updateDoc(
-              doc(
-                db,
-                "products",
-                input.dataset.id
-              ),
-              {
-                [field]: value
-              }
-            );
+                ? parseFloat(input.value)
 
-          } catch (e) {
+                : parseInt(
+                    input.value,
+                    10
+                  );
 
-            alert(
-              "Couldn't update product: " +
-              e.message
-            );
+
+            try {
+
+              await updateDoc(
+                doc(
+                  db,
+                  "products",
+                  input.dataset.id
+                ),
+                {
+                  [field]: value
+                }
+              );
+
+
+            } catch (e) {
+
+              alert(
+                "Couldn't update product: " +
+                e.message
+              );
+
+            }
 
           }
-
-        });
+        );
 
       });
 
 
-    // ---- Delete ----
+    // ========================================================
+    // ALREADY PRINTED CHECKBOX
+    // ========================================================
 
     body
-      .querySelectorAll("[data-delete]")
+      .querySelectorAll(
+        "[data-printed-id]"
+      )
+      .forEach((checkbox) => {
+
+        checkbox.addEventListener(
+          "change",
+          async () => {
+
+            const productId =
+              checkbox.dataset.printedId;
+
+
+            const alreadyPrinted =
+              checkbox.checked;
+
+
+            checkbox.disabled = true;
+
+
+            try {
+
+              await updateDoc(
+                doc(
+                  db,
+                  "products",
+                  productId
+                ),
+                {
+                  alreadyPrinted
+                }
+              );
+
+
+            } catch (e) {
+
+              checkbox.checked =
+                !alreadyPrinted;
+
+
+              alert(
+                "Couldn't update printed status: " +
+                e.message
+              );
+
+
+            } finally {
+
+              checkbox.disabled = false;
+
+            }
+
+          }
+        );
+
+      });
+
+
+    // ========================================================
+    // DELETE
+    // ========================================================
+
+    body
+      .querySelectorAll(
+        "[data-delete]"
+      )
       .forEach((btn) => {
 
-        btn.addEventListener("click", async () => {
+        btn.addEventListener(
+          "click",
+          async () => {
 
-          if (!confirm("Delete this product?")) {
-            return;
-          }
-
-          try {
-
-            await deleteDoc(
-              doc(
-                db,
-                "products",
-                btn.dataset.delete
+            if (
+              !confirm(
+                "Delete this product?"
               )
-            );
+            ) {
+              return;
+            }
 
-          } catch (e) {
 
-            alert(
-              "Couldn't delete product: " +
-              e.message
-            );
+            try {
+
+              await deleteDoc(
+                doc(
+                  db,
+                  "products",
+                  btn.dataset.delete
+                )
+              );
+
+
+            } catch (e) {
+
+              alert(
+                "Couldn't delete product: " +
+                e.message
+              );
+
+            }
 
           }
-
-        });
+        );
 
       });
 
   });
+
 }
 
 
@@ -857,72 +1115,108 @@ function wireProductForm() {
 
   document
     .getElementById("productForm")
-    .addEventListener("submit", async (e) => {
+    .addEventListener(
+      "submit",
+      async (e) => {
 
-      e.preventDefault();
+        e.preventDefault();
 
 
-      try {
+        try {
 
-        await addDoc(
-          collection(db, "products"),
-          {
-            name:
-              document
-                .getElementById("pName")
-                .value
-                .trim(),
+          await addDoc(
+            collection(
+              db,
+              "products"
+            ),
+            {
 
-            price:
-              parseFloat(
+              name:
                 document
-                  .getElementById("pPrice")
+                  .getElementById(
+                    "pName"
+                  )
                   .value
-              ),
+                  .trim(),
 
-            stock:
-              parseInt(
+
+              price:
+                parseFloat(
+                  document
+                    .getElementById(
+                      "pPrice"
+                    )
+                    .value
+                ),
+
+
+              stock:
+                parseInt(
+                  document
+                    .getElementById(
+                      "pStock"
+                    )
+                    .value,
+                  10
+                ),
+
+
+              desc:
                 document
-                  .getElementById("pStock")
-                  .value,
-                10
-              ),
-
-            desc:
-              document
-                .getElementById("pDesc")
-                .value
-                .trim(),
-
-            imageUrl:
-              document
-                .getElementById("pImage")
-                .value
-                .trim(),
-
-            flowqFileId:
-              document
-                .getElementById("pFlowq")
-                .value
-                .trim(),
-
-            createdAt:
-              serverTimestamp()
-          }
-        );
+                  .getElementById(
+                    "pDesc"
+                  )
+                  .value
+                  .trim(),
 
 
-        e.target.reset();
+              imageUrl:
+                document
+                  .getElementById(
+                    "pImage"
+                  )
+                  .value
+                  .trim(),
 
 
-      } catch (e) {
+              flowqFileId:
+                document
+                  .getElementById(
+                    "pFlowq"
+                  )
+                  .value
+                  .trim(),
 
-        alert(
-          "Couldn't add product: " +
-          e.message
-        );
+
+              // NEW
+              alreadyPrinted:
+                document
+                  .getElementById(
+                    "pAlreadyPrinted"
+                  )
+                  .checked,
+
+
+              createdAt:
+                serverTimestamp()
+
+            }
+          );
+
+
+          e.target.reset();
+
+
+        } catch (e) {
+
+          alert(
+            "Couldn't add product: " +
+            e.message
+          );
+
+        }
 
       }
+    );
 
-    });
 }
