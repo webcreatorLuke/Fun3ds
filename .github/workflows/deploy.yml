@@ -26,10 +26,10 @@ jobs:
         run: |
           sed -i "s|__STRIPE_PUBLISHABLE_KEY__|${{ secrets.STRIPE_PUBLISHABLE_KEY }}|g" public/js/checkout.js
 
-      - name: Deploy Firestore rules and Hosting
+      - name: Deploy Hosting only
         run: |
           npx firebase-tools deploy \
-            --only firestore:rules,hosting \
+            --only hosting \
             --project ${{ secrets.FIREBASE_PROJECT_ID }} \
             --non-interactive
         env:
