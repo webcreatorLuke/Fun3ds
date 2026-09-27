@@ -38,16 +38,39 @@
   <!-- ORDERS -->
   <section id="tab-orders">
     <table class="admin-table">
-      <thead><tr><th>Order</th><th>Item</th><th>Customer</th><th>Delivery</th><th>Status</th><th>FlowQ</th><th></th></tr></thead>
-      <tbody id="ordersBody"><tr><td colspan="7">Loading…</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Item</th>
+          <th>Customer</th>
+          <th>Delivery</th>
+          <th>Status</th>
+          <th>Printed</th>
+          <th>FlowQ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody">
+        <tr><td colspan="8">Loading…</td></tr>
+      </tbody>
     </table>
   </section>
 
   <!-- CUSTOM REQUESTS -->
   <section id="tab-requests" style="display:none;">
     <table class="admin-table">
-      <thead><tr><th>Type</th><th>Details</th><th>Customer</th><th>Status</th><th></th></tr></thead>
-      <tbody id="requestsBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Details</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="requestsBody">
+        <tr><td colspan="5">Loading…</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -55,19 +78,58 @@
   <section id="tab-products" style="display:none;">
     <div class="panel" style="margin-bottom:24px;">
       <h3 style="margin-top:0; font-family:var(--font-display);">Add product</h3>
+
       <form id="productForm">
-        <div class="field"><label>Name</label><input id="pName" required /></div>
-        <div class="field"><label>Price (USD)</label><input id="pPrice" type="number" step="0.01" min="0" required /></div>
-        <div class="field"><label>Stock</label><input id="pStock" type="number" min="0" required /></div>
-        <div class="field"><label>Description</label><textarea id="pDesc"></textarea></div>
-        <div class="field"><label>Image URL</label><input id="pImage" type="url" placeholder="https://…" /></div>
-        <div class="field"><label>FlowQ file ID <span class="hint">(so paid orders auto-queue to print)</span></label><input id="pFlowq" /></div>
+        <div class="field">
+          <label>Name</label>
+          <input id="pName" required />
+        </div>
+
+        <div class="field">
+          <label>Price (USD)</label>
+          <input id="pPrice" type="number" step="0.01" min="0" required />
+        </div>
+
+        <div class="field">
+          <label>Stock</label>
+          <input id="pStock" type="number" min="0" required />
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea id="pDesc"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Image URL</label>
+          <input id="pImage" type="url" placeholder="https://…" />
+        </div>
+
+        <div class="field">
+          <label>
+            FlowQ file ID
+            <span class="hint">(so paid orders auto-queue to print)</span>
+          </label>
+          <input id="pFlowq" />
+        </div>
+
         <button class="btn btn-primary" type="submit">Add product</button>
       </form>
     </div>
+
     <table class="admin-table">
-      <thead><tr><th>Name</th><th>Price</th><th>Stock</th><th>FlowQ ID</th><th></th></tr></thead>
-      <tbody id="productsBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>FlowQ ID</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="productsBody">
+        <tr><td colspan="5">Loading…</td></tr>
+      </tbody>
     </table>
   </section>
 </div>
@@ -76,13 +138,30 @@
 <div id="acceptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
   <div class="panel" style="width:420px; max-width:92vw;">
     <h3 style="margin-top:0; font-family:var(--font-display);">Accept request</h3>
-    <div class="field"><label>Price (USD)</label><input id="acceptPrice" type="number" step="0.01" min="0" required /></div>
-    <div class="field"><label>Payment link</label><input id="acceptPaymentLink" type="url" placeholder="Stripe payment link URL" required /></div>
-    <div class="field"><label>FlowQ file ID <span class="hint">(leave blank to send to FlowQ later yourself)</span></label><input id="acceptFlowq" placeholder="e.g. the sliced file's FlowQ ID" /></div>
+
+    <div class="field">
+      <label>Price (USD)</label>
+      <input id="acceptPrice" type="number" step="0.01" min="0" required />
+    </div>
+
+    <div class="field">
+      <label>Payment link</label>
+      <input id="acceptPaymentLink" type="url" placeholder="Stripe payment link URL" required />
+    </div>
+
+    <div class="field">
+      <label>
+        FlowQ file ID
+        <span class="hint">(leave blank to send to FlowQ later yourself)</span>
+      </label>
+      <input id="acceptFlowq" placeholder="e.g. the sliced file's FlowQ ID" />
+    </div>
+
     <div style="display:flex; gap:10px;">
       <button class="btn btn-primary" id="acceptConfirm" style="flex:1;">Accept & notify</button>
       <button class="btn" id="acceptCancel" style="flex:1;">Cancel</button>
     </div>
+
     <p class="field hint" id="acceptStatus"></p>
   </div>
 </div>
