@@ -141,41 +141,89 @@ function watchOrders() {
 
     if (snap.empty) {
       body.innerHTML =
-        `<tr><td colspan="7">No orders yet.</td></tr>`;
+        `<tr><td colspan="8">No orders yet.</td></tr>`;
       return;
     }
 
     body.innerHTML = snap.docs.map((d) => {
       const o = d.data();
+      const orderId = d.id;
 
-      const items = (o.items || [])
-        .map((i) => `${i.name} × ${i.qty}`)
-        .join(", ");
+      const orderItems = o.items || [];
+
+      const itemsHtml = orderItems.length
+        ? orderItems.map((i, index) => {
+            const printed = i.alreadyPrinted === true;
+
+            return `
+              <div style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+                margin-bottom:6px;
+                ${printed ? "opacity:.65;" : ""}
+              ">
+                <span>
+                  ${i.name || "Item"} × ${i.qty || 1}
+                </span>
+
+                <label style="
+                  display:flex;
+                  align-items:center;
+                  gap:4px;
+                  font-size:12px;
+                  color:var(--text-dim);
+                  white-space:nowrap;
+                  cursor:pointer;
+                ">
+                  <input
+                    type="checkbox"
+                    data-printed-order="${orderId}"
+                    data-printed-index="${index}"
+                    ${printed ? "checked" : ""}
+                  />
+                  Printed
+                </label>
+              </div>
+            `;
+          }).join("")
+        : "—";
 
       const delivery = o.deliveryInfo
         ? `${o.deliveryInfo.name}<br/><span style="color:var(--text-dim)">${o.deliveryInfo.address}</span>`
         : "—";
 
+      const printableItems = orderItems.filter(
+        (item) => item.alreadyPrinted !== true
+      );
+
+      const allPrinted =
+        orderItems.length > 0 && printableItems.length === 0;
+
       const flowqLabel = o.flowqSent
         ? `<span class="badge accepted">sent</span>`
-        : (
-            o.status === "paid"
-              ? `<span class="badge pending">not sent</span>`
-              : "—"
-          );
+        : allPrinted
+          ? `<span class="badge accepted">all printed</span>`
+          : (
+              o.status === "paid"
+                ? `<span class="badge pending">not sent</span>`
+                : "—"
+            );
 
       const sendBtn =
-        o.status === "paid" && !o.flowqSent
-          ? `<button class="btn" data-send-flowq="${d.id}">Send to FlowQ</button>`
+        o.status === "paid" &&
+        !o.flowqSent &&
+        !allPrinted
+          ? `<button class="btn" data-send-flowq="${orderId}">Send to FlowQ</button>`
           : "";
 
       return `
         <tr>
           <td style="font-family:var(--font-tag); font-size:12px;">
-            ${d.id.slice(0, 8)}
+            ${orderId.slice(0, 8)}
           </td>
 
-          <td>${items}</td>
+          <td>${itemsHtml}</td>
 
           <td>${o.customerEmail || "—"}</td>
 
@@ -185,6 +233,16 @@ function watchOrders() {
             <span class="badge ${o.status}">
               ${o.status}
             </span>
+          </td>
+
+          <td>
+            ${
+              allPrinted
+                ? `<span class="badge accepted">all printed</span>`
+                : orderItems.some(i => i.alreadyPrinted === true)
+                  ? `<span class="badge pending">some printed</span>`
+                  : "—"
+            }
           </td>
 
           <td>${flowqLabel}</td>
@@ -197,7 +255,81 @@ function watchOrders() {
     }).join("");
 
 
-    // ---- Send to FlowQ ----
+    // ========================================================
+    // ALREADY PRINTED CHECKBOXES
+    // ========================================================
+
+    body
+      .querySelectorAll("[data-printed-order]")
+      .forEach((checkbox) => {
+
+        checkbox.addEventListener("change", async () => {
+
+          const orderId =
+            checkbox.dataset.printedOrder;
+
+          const itemIndex =
+            parseInt(
+              checkbox.dataset.printedIndex,
+              10
+            );
+
+          checkbox.disabled = true;
+
+          try {
+
+            // Find the current order data from the snapshot.
+            const orderDoc =
+              snap.docs.find((d) => d.id === orderId);
+
+            if (!orderDoc) {
+              throw new Error("Order not found.");
+            }
+
+            const orderData = orderDoc.data();
+
+            const items = [...(orderData.items || [])];
+
+            if (!items[itemIndex]) {
+              throw new Error("Order item not found.");
+            }
+
+            // Make a copy of the item and change its printed state.
+            items[itemIndex] = {
+              ...items[itemIndex],
+              alreadyPrinted: checkbox.checked
+            };
+
+            await updateDoc(
+              doc(db, "orders", orderId),
+              {
+                items
+              }
+            );
+
+          } catch (e) {
+
+            checkbox.checked = !checkbox.checked;
+
+            alert(
+              "Couldn't update printed status: " +
+              e.message
+            );
+
+          } finally {
+
+            checkbox.disabled = false;
+
+          }
+
+        });
+
+      });
+
+
+    // ========================================================
+    // SEND TO FLOWQ
+    // ========================================================
 
     body
       .querySelectorAll("[data-send-flowq]")
@@ -205,7 +337,7 @@ function watchOrders() {
 
         btn.addEventListener("click", async () => {
 
-          if (!confirm("Send this order to FlowQ?")) {
+          if (!confirm("Send the unprinted items in this order to FlowQ?")) {
             return;
           }
 
@@ -214,25 +346,35 @@ function watchOrders() {
 
           try {
 
-            await callWorker(
+            const result = await callWorker(
               "/send-order-to-flowq",
               {
                 orderId: btn.dataset.sendFlowq
               }
             );
 
-            btn.textContent = "Sent";
+            if (result.skippedAll) {
+              btn.textContent = "All printed";
+            } else {
+              btn.textContent = "Sent";
+            }
 
           } catch (e) {
 
             btn.disabled = false;
             btn.textContent = "Send to FlowQ";
 
-            alert("Couldn't send to FlowQ: " + e.message);
+            alert(
+              "Couldn't send to FlowQ: " +
+              e.message
+            );
+
           }
+
         });
 
       });
+
   });
 }
 
@@ -261,6 +403,7 @@ function watchRequests() {
         `<tr><td colspan="5">No requests yet.</td></tr>`;
 
       return;
+
     }
 
 
@@ -399,7 +542,11 @@ function watchRequests() {
             btn.disabled = false;
             btn.textContent = "Decline";
 
-            alert("Couldn't decline request: " + e.message);
+            alert(
+              "Couldn't decline request: " +
+              e.message
+            );
+
           }
 
         });
@@ -462,6 +609,7 @@ function wireAcceptModal() {
         "No request selected.";
 
       return;
+
     }
 
 
@@ -471,6 +619,7 @@ function wireAcceptModal() {
         "Price and payment link are required.";
 
       return;
+
     }
 
 
@@ -548,6 +697,7 @@ function watchProducts() {
         `<tr><td colspan="5">No products yet.</td></tr>`;
 
       return;
+
     }
 
 
