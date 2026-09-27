@@ -4,40 +4,103 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin — Fun3ds</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="css/styles.css" />
 </head>
+
 <body>
 
 <header class="site-header">
   <div class="wrap">
-    <a class="logo" href="index.html"><span class="dot"></span>Fun3ds admin</a>
+
+    <a class="logo" href="index.html">
+      <span class="dot"></span>
+      Fun3ds admin
+    </a>
+
     <div style="display:flex; gap:10px; align-items:center;">
-      <span data-user-email style="font-size:13px; color:var(--text-dim);"></span>
-      <button class="btn" id="signOutBtn">Sign out</button>
+      <span
+        data-user-email
+        style="font-size:13px; color:var(--text-dim);"
+      ></span>
+
+      <button class="btn" id="signOutBtn">
+        Sign out
+      </button>
     </div>
+
   </div>
 </header>
 
-<div id="gate" class="wrap" style="padding-top:64px; display:none;">
+
+<!-- ============================================================
+     NOT AUTHORIZED
+============================================================ -->
+
+<div
+  id="gate"
+  class="wrap"
+  style="padding-top:64px; display:none;"
+>
   <div class="panel" style="max-width:420px;">
-    <h2 style="font-family:var(--font-display);">Not authorized</h2>
-    <p style="color:var(--text-dim);">Sign in with the admin account to see this page.</p>
-    <a href="index.html" class="btn">Back to shop</a>
+
+    <h2 style="font-family:var(--font-display);">
+      Not authorized
+    </h2>
+
+    <p style="color:var(--text-dim);">
+      Sign in with the admin account to see this page.
+    </p>
+
+    <a href="index.html" class="btn">
+      Back to shop
+    </a>
+
   </div>
 </div>
 
-<div id="dashboard" class="wrap" style="padding-top:32px; display:none;">
+
+<!-- ============================================================
+     DASHBOARD
+============================================================ -->
+
+<div
+  id="dashboard"
+  class="wrap"
+  style="padding-top:32px; display:none;"
+>
+
   <div class="tabbar">
-    <button data-tab="orders" class="active">Orders</button>
-    <button data-tab="requests">Custom requests</button>
-    <button data-tab="products">Products</button>
+
+    <button
+      data-tab="orders"
+      class="active"
+    >
+      Orders
+    </button>
+
+    <button data-tab="requests">
+      Custom requests
+    </button>
+
+    <button data-tab="products">
+      Products
+    </button>
+
   </div>
 
-  <!-- ORDERS -->
+
+  <!-- ==========================================================
+       ORDERS
+  =========================================================== -->
+
   <section id="tab-orders">
+
     <table class="admin-table">
+
       <thead>
         <tr>
           <th>Order</th>
@@ -45,20 +108,37 @@
           <th>Customer</th>
           <th>Delivery</th>
           <th>Status</th>
-          <th>Printed</th>
           <th>FlowQ</th>
           <th></th>
         </tr>
       </thead>
+
       <tbody id="ordersBody">
-        <tr><td colspan="8">Loading…</td></tr>
+
+        <tr>
+          <td colspan="7">
+            Loading…
+          </td>
+        </tr>
+
       </tbody>
+
     </table>
+
   </section>
 
-  <!-- CUSTOM REQUESTS -->
-  <section id="tab-requests" style="display:none;">
+
+  <!-- ==========================================================
+       CUSTOM REQUESTS
+  =========================================================== -->
+
+  <section
+    id="tab-requests"
+    style="display:none;"
+  >
+
     <table class="admin-table">
+
       <thead>
         <tr>
           <th>Type</th>
@@ -68,104 +148,348 @@
           <th></th>
         </tr>
       </thead>
+
       <tbody id="requestsBody">
-        <tr><td colspan="5">Loading…</td></tr>
+
+        <tr>
+          <td colspan="5">
+            Loading…
+          </td>
+        </tr>
+
       </tbody>
+
     </table>
+
   </section>
 
-  <!-- PRODUCTS -->
-  <section id="tab-products" style="display:none;">
-    <div class="panel" style="margin-bottom:24px;">
-      <h3 style="margin-top:0; font-family:var(--font-display);">Add product</h3>
+
+  <!-- ==========================================================
+       PRODUCTS
+  =========================================================== -->
+
+  <section
+    id="tab-products"
+    style="display:none;"
+  >
+
+    <!-- ADD PRODUCT -->
+
+    <div
+      class="panel"
+      style="margin-bottom:24px;"
+    >
+
+      <h3
+        style="
+          margin-top:0;
+          font-family:var(--font-display);
+        "
+      >
+        Add product
+      </h3>
 
       <form id="productForm">
-        <div class="field">
-          <label>Name</label>
-          <input id="pName" required />
-        </div>
 
         <div class="field">
-          <label>Price (USD)</label>
-          <input id="pPrice" type="number" step="0.01" min="0" required />
+
+          <label>
+            Name
+          </label>
+
+          <input
+            id="pName"
+            required
+          />
+
         </div>
 
-        <div class="field">
-          <label>Stock</label>
-          <input id="pStock" type="number" min="0" required />
-        </div>
 
         <div class="field">
-          <label>Description</label>
+
+          <label>
+            Price (USD)
+          </label>
+
+          <input
+            id="pPrice"
+            type="number"
+            step="0.01"
+            min="0"
+            required
+          />
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Stock
+          </label>
+
+          <input
+            id="pStock"
+            type="number"
+            min="0"
+            required
+          />
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Description
+          </label>
+
           <textarea id="pDesc"></textarea>
+
         </div>
 
-        <div class="field">
-          <label>Image URL</label>
-          <input id="pImage" type="url" placeholder="https://…" />
-        </div>
 
         <div class="field">
+
+          <label>
+            Image URL
+          </label>
+
+          <input
+            id="pImage"
+            type="url"
+            placeholder="https://…"
+          />
+
+        </div>
+
+
+        <div class="field">
+
           <label>
             FlowQ file ID
-            <span class="hint">(so paid orders auto-queue to print)</span>
+            <span class="hint">
+              (so paid orders can automatically queue to print)
+            </span>
           </label>
+
           <input id="pFlowq" />
+
         </div>
 
-        <button class="btn btn-primary" type="submit">Add product</button>
+
+        <!-- NEW -->
+
+        <div
+          class="field"
+          style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+          "
+        >
+
+          <input
+            id="pAlreadyPrinted"
+            type="checkbox"
+            style="
+              width:18px;
+              height:18px;
+              cursor:pointer;
+            "
+          />
+
+          <label
+            for="pAlreadyPrinted"
+            style="margin:0; cursor:pointer;"
+          >
+            Already printed
+          </label>
+
+        </div>
+
+
+        <button
+          class="btn btn-primary"
+          type="submit"
+        >
+          Add product
+        </button>
+
       </form>
+
     </div>
+
+
+    <!-- PRODUCT LIST -->
 
     <table class="admin-table">
+
       <thead>
+
         <tr>
+
           <th>Name</th>
+
           <th>Price</th>
+
           <th>Stock</th>
+
           <th>FlowQ ID</th>
+
+          <th>Already Printed</th>
+
           <th></th>
+
         </tr>
+
       </thead>
+
+
       <tbody id="productsBody">
-        <tr><td colspan="5">Loading…</td></tr>
+
+        <tr>
+          <td colspan="6">
+            Loading…
+          </td>
+        </tr>
+
       </tbody>
+
     </table>
+
   </section>
+
 </div>
 
-<!-- Accept-request modal -->
-<div id="acceptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center;">
-  <div class="panel" style="width:420px; max-width:92vw;">
-    <h3 style="margin-top:0; font-family:var(--font-display);">Accept request</h3>
+
+<!-- ============================================================
+     ACCEPT REQUEST MODAL
+============================================================ -->
+
+<div
+  id="acceptModal"
+  style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.6);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+  "
+>
+
+  <div
+    class="panel"
+    style="
+      width:420px;
+      max-width:92vw;
+    "
+  >
+
+    <h3
+      style="
+        margin-top:0;
+        font-family:var(--font-display);
+      "
+    >
+      Accept request
+    </h3>
+
 
     <div class="field">
-      <label>Price (USD)</label>
-      <input id="acceptPrice" type="number" step="0.01" min="0" required />
+
+      <label>
+        Price (USD)
+      </label>
+
+      <input
+        id="acceptPrice"
+        type="number"
+        step="0.01"
+        min="0"
+        required
+      />
+
     </div>
 
-    <div class="field">
-      <label>Payment link</label>
-      <input id="acceptPaymentLink" type="url" placeholder="Stripe payment link URL" required />
-    </div>
 
     <div class="field">
+
+      <label>
+        Payment link
+      </label>
+
+      <input
+        id="acceptPaymentLink"
+        type="url"
+        placeholder="Stripe payment link URL"
+        required
+      />
+
+    </div>
+
+
+    <div class="field">
+
       <label>
         FlowQ file ID
-        <span class="hint">(leave blank to send to FlowQ later yourself)</span>
+
+        <span class="hint">
+          (leave blank to send to FlowQ later yourself)
+        </span>
+
       </label>
-      <input id="acceptFlowq" placeholder="e.g. the sliced file's FlowQ ID" />
+
+      <input
+        id="acceptFlowq"
+        placeholder="e.g. the sliced file's FlowQ ID"
+      />
+
     </div>
 
-    <div style="display:flex; gap:10px;">
-      <button class="btn btn-primary" id="acceptConfirm" style="flex:1;">Accept & notify</button>
-      <button class="btn" id="acceptCancel" style="flex:1;">Cancel</button>
+
+    <div
+      style="
+        display:flex;
+        gap:10px;
+      "
+    >
+
+      <button
+        class="btn btn-primary"
+        id="acceptConfirm"
+        style="flex:1;"
+      >
+        Accept & notify
+      </button>
+
+      <button
+        class="btn"
+        id="acceptCancel"
+        style="flex:1;"
+      >
+        Cancel
+      </button>
+
     </div>
 
-    <p class="field hint" id="acceptStatus"></p>
+
+    <p
+      class="field hint"
+      id="acceptStatus"
+    ></p>
+
   </div>
+
 </div>
 
-<script type="module" src="js/admin.js"></script>
+
+<script
+  type="module"
+  src="js/admin.js"
+></script>
+
 </body>
 </html>
