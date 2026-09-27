@@ -29,6 +29,10 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Inject Stripe publishable key
+        run: |
+          sed -i "s|__STRIPE_PUBLISHABLE_KEY__|${{ secrets.STRIPE_PUBLISHABLE_KEY }}|g" public/js/checkout.js
+
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
         with:
